@@ -29,5 +29,16 @@ public interface StopStrategy {
      * @param failedAttempt the previous failed {@code Attempt}
      * @return <code>true</code> if the retryer must stop, <code>false</code> otherwise
      */
-    boolean shouldStop(Attempt failedAttempt);
+    default boolean shouldStop(Attempt failedAttempt) {
+        return shouldStop((int) failedAttempt.getAttemptNumber(), failedAttempt.getDelaySinceFirstAttempt());
+    }
+
+    /**
+     * @deprecated Override and call {@link StopStrategy#shouldStop(Attempt)} instead. This
+     *             method only exists to allow backwards compatibility with version 1.
+     */
+    @Deprecated
+    default boolean shouldStop(int previousAttemptNumber, long delaySinceFirstAttemptInMillis) {
+        throw new IllegalStateException("Either shouldStop(Attempt) or shouldStop(int, long) must be overridden.");
+    }
 }

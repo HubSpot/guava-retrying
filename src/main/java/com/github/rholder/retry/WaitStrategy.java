@@ -29,5 +29,16 @@ public interface WaitStrategy {
      * @param failedAttempt the previous failed {@code Attempt}
      * @return the sleep time before next attempt
      */
-    long computeSleepTime(Attempt failedAttempt);
+    default long computeSleepTime(Attempt failedAttempt) {
+        return computeSleepTime((int) failedAttempt.getAttemptNumber(), failedAttempt.getDelaySinceFirstAttempt());
+    }
+
+    /**
+     * @deprecated Override and call {@link WaitStrategy#computeSleepTime(Attempt)} instead. This
+     *             method only exists to allow backwards compatibility with version 1.
+     */
+    @Deprecated
+    default long computeSleepTime(int previousAttemptNumber, long delaySinceFirstAttemptInMillis) {
+        throw new IllegalStateException("Either computeSleepTime(Attempt) or computeSleepTime(int, long) must be overridden.");
+    }
 }
