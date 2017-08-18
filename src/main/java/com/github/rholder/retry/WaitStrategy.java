@@ -16,6 +16,8 @@
 
 package com.github.rholder.retry;
 
+import com.github.rholder.retry.Retryer.ResultAttempt;
+
 /**
  * A strategy used to decide how long to sleep before retrying after a failed attempt.
  *
@@ -30,7 +32,11 @@ public interface WaitStrategy {
      * @return the sleep time before next attempt
      */
     default long computeSleepTime(Attempt failedAttempt) {
-        return computeSleepTime((int) failedAttempt.getAttemptNumber(), failedAttempt.getDelaySinceFirstAttempt());
+        try {
+            return computeSleepTime((int) failedAttempt.getAttemptNumber(), failedAttempt.getDelaySinceFirstAttempt());
+        } catch (StackOverflowError e) {
+            throw new IllegalStateException("Either computeSleepTime(Attempt) or computeSleepTime(int, long) must be overridden.", e);
+        }
     }
 
     /**
@@ -39,6 +45,10 @@ public interface WaitStrategy {
      */
     @Deprecated
     default long computeSleepTime(int previousAttemptNumber, long delaySinceFirstAttemptInMillis) {
-        throw new IllegalStateException("Either computeSleepTime(Attempt) or computeSleepTime(int, long) must be overridden.");
+        try {
+            return computeSleepTime(new ResultAttempt(null, previousAttemptNumber, delaySinceFirstAttemptInMillis));
+        } catch (StackOverflowError e) {
+            throw new IllegalStateException("Either computeSleepTime(Attempt) or computeSleepTime(int, long) must be overridden.", e);
+        }
     }
 }

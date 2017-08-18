@@ -16,6 +16,8 @@
 
 package com.github.rholder.retry;
 
+import com.github.rholder.retry.Retryer.ResultAttempt;
+
 /**
  * A strategy used to decide if a retryer must stop retrying after a failed attempt or not.
  *
@@ -30,7 +32,11 @@ public interface StopStrategy {
      * @return <code>true</code> if the retryer must stop, <code>false</code> otherwise
      */
     default boolean shouldStop(Attempt failedAttempt) {
-        return shouldStop((int) failedAttempt.getAttemptNumber(), failedAttempt.getDelaySinceFirstAttempt());
+        try {
+            return shouldStop((int) failedAttempt.getAttemptNumber(), failedAttempt.getDelaySinceFirstAttempt());
+        } catch (StackOverflowError e) {
+            throw new IllegalStateException("Either shouldStop(Attempt) or shouldStop(int, long) must be overridden.", e);
+        }
     }
 
     /**
@@ -39,6 +45,10 @@ public interface StopStrategy {
      */
     @Deprecated
     default boolean shouldStop(int previousAttemptNumber, long delaySinceFirstAttemptInMillis) {
-        throw new IllegalStateException("Either shouldStop(Attempt) or shouldStop(int, long) must be overridden.");
+        try {
+            return shouldStop(new ResultAttempt(null, previousAttemptNumber, delaySinceFirstAttemptInMillis));
+        } catch (StackOverflowError e) {
+            throw new IllegalStateException("Either shouldStop(Attempt) or shouldStop(int, long) must be overridden.", e);
+        }
     }
 }
